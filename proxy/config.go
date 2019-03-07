@@ -6,7 +6,6 @@ import (
 	"os"
 )
 
-// Config 保存代理服务器的配置
 type Config struct {
 	Port string `json:"port"`
 	Auth bool   `json:"auth"`
@@ -14,7 +13,6 @@ type Config struct {
 	User map[string]string `json:"user"`
 }
 
-// 从指定json文件读取config配置
 func (c *Config) GetConfig(filename string) error {
 
 	configFile, err := os.Open(filename)

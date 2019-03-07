@@ -30,7 +30,6 @@ func NewProxyServer() *http.Server {
 	}
 }
 
-// 自动执行的方法，因为ProxyServer实现了Handler接口,需要ServerHTTP
 func (proxy *ProxyServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -40,22 +39,20 @@ func (proxy *ProxyServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}()
 
-	// 鉴权
 	if proxy.Auth(rw, req) {
 		return
 	}
 
-	if req.Method == "CONNECT" { // 是connect连接
+	if req.Method == "CONNECT" {
 		proxy.HttpsHandler(rw, req)
 	} else {
 		proxy.HttpHandler(rw, req)
 	}
 }
 
-// 处理普通的http请求
 func (proxy *ProxyServer) HttpHandler(rw http.ResponseWriter, req *http.Request) {
 	log.Info("%v is sending request %v %v ", proxy.Name, req.Method, req.URL.Host)
-	util.RemoveProxyHeaders(req) // 去除不必要的头
+	util.RemoveProxyHeaders(req)
 
 	resp, err := proxy.Tr.RoundTrip(req)
 	if err != nil {
@@ -65,7 +62,7 @@ func (proxy *ProxyServer) HttpHandler(rw http.ResponseWriter, req *http.Request)
 	}
 	defer resp.Body.Close()
 
-	util.ClearHeaders(rw.Header()) // 得到一个空的Header
+	util.ClearHeaders(rw.Header())
 	util.CopyHeaders(rw.Header(), resp.Header)
 	rw.WriteHeader(resp.StatusCode)
 
@@ -77,19 +74,18 @@ func (proxy *ProxyServer) HttpHandler(rw http.ResponseWriter, req *http.Request)
 	log.Info("%v copied %v bytes from remote host %v.", proxy.Name, nr, req.URL.Host)
 }
 
-// 处理https连接，主要用于CONNECT方法
 func (proxy *ProxyServer) HttpsHandler(rw http.ResponseWriter, req *http.Request) {
 	log.Info("[CONNECT] %v tried to connect to remote host %v", proxy.Name, req.URL.Host)
 
 	hj, _ := rw.(http.Hijacker)
-	client, _, err := hj.Hijack() //获取客户端与代理服务器的tcp连接
+	client, _, err := hj.Hijack()
 	if err != nil {
 		log.Error("%v failed to get Tcp connection of", proxy.Name, req.RequestURI)
 		http.Error(rw, "Failed", http.StatusBadRequest)
 		return
 	}
 
-	remote, err := net.Dial("tcp", req.URL.Host) //建立服务端和代理服务器的tcp连接
+	remote, err := net.Dial("tcp", req.URL.Host)
 	if err != nil {
 		log.Error("%v failed to connect %v", proxy.Name, req.RequestURI)
 		http.Error(rw, "Failed", http.StatusBadRequest)
@@ -103,7 +99,6 @@ func (proxy *ProxyServer) HttpsHandler(rw http.ResponseWriter, req *http.Request
 	go copyRemoteToClient(proxy.Name, client, remote)
 }
 
-// data copy between two socket
 func copyRemoteToClient(Name string, remote, client net.Conn) {
 	defer func() {
 		remote.Close()
