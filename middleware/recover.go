@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/bingtianbaihua/hfs/log"
+	"github.com/bingtianbaihua/goproxy/log"
 )
 
 type RecoverAdapter struct{}

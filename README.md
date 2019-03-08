@@ -1,2 +1,2 @@
-# http-proxy
+# goproxy
 http proxy based on golang 
