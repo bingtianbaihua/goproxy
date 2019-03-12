@@ -76,20 +76,6 @@ func (p *ProxyAdapter) HttpsHandler(rw http.ResponseWriter, req *http.Request) {
 
 	client.Write(proxyConnectSuccess)
 
-	go copyRemoteToClient(remote, client)
-	go copyRemoteToClient(client, remote)
-}
-
-func copyRemoteToClient(remote, client net.Conn) {
-	defer func() {
-		remote.Close()
-		client.Close()
-	}()
-
-	nr, err := io.Copy(remote, client)
-	if err != nil && err != io.EOF {
-		log.Error("got an error when handles CONNECT %v", err)
-		return
-	}
-	log.Info("[CONNECT] transported %v bytes betwwen %v and %v", nr, remote.RemoteAddr(), client.RemoteAddr())
+	go util.Pipe(remote, client)
+	go util.Pipe(client, remote)
 }
