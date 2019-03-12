@@ -2,6 +2,20 @@ package util
 
 import "net/http"
 
+var (
+	hopHeaders = []string{
+		"Connection",
+		"Proxy-Connection",
+		"Keep-Alive",
+		"Proxy-Authenticate",
+		"Proxy-Authorization",
+		"Te",
+		"Trailer",
+		"Transfer-Encoding",
+		"Upgrade",
+	}
+)
+
 func CopyHeaders(dst, src http.Header) {
 	for key, values := range src {
 		for _, value := range values {
@@ -18,13 +32,7 @@ func ClearHeaders(headers http.Header) {
 
 func RemoveProxyHeaders(req *http.Request) {
 	req.RequestURI = ""
-	req.Header.Del("Proxy-Connection")
-	req.Header.Del("Connection")
-	req.Header.Del("Keep-Alive")
-	req.Header.Del("Proxy-Authenticate")
-	req.Header.Del("Proxy-Authorization")
-	req.Header.Del("TE")
-	req.Header.Del("Trailers")
-	req.Header.Del("Transfer-Encoding")
-	req.Header.Del("Upgrade")
+	for _, h := range hopHeaders {
+		req.Header.Del(h)
+	}
 }
